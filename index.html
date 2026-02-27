@@ -1,5 +1,186 @@
 <!DOCTYPE html>
+<!-- ═══ RELEASE BANNER ═══ -->
+<style>
+#rxBanner {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 10000; height: 54px;
+  background: #000;
+  overflow: hidden;
+  cursor: pointer;
+}
+#rxCanvas { position:absolute; inset:0; width:100%; height:100%; opacity:0.9; }
+#rxContent {
+  position: relative; z-index: 5;
+  height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  gap: 0; pointer-events: none;
+}
+.rx-live {
+  display: flex; align-items: center; gap: 7px;
+  margin-right: 22px;
+}
+.rx-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #ff1a00;
+  box-shadow: 0 0 12px #ff1a00, 0 0 24px rgba(255,26,0,0.5);
+  animation: rxDot 1s ease-in-out infinite;
+}
+@keyframes rxDot { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(0.5);opacity:0.3} }
+.rx-live-txt {
+  font-family:'Courier New',monospace; font-size:11px; font-weight:700;
+  letter-spacing:6px; color:#ff2200; text-transform:uppercase;
+  text-shadow: 0 0 10px rgba(255,34,0,0.8), 0 0 20px rgba(255,34,0,0.4);
+}
+.rx-divider { width:1px; height:28px; background:rgba(184,150,62,0.3); margin:0 22px; }
 
+.rx-title {
+  font-family:'Playfair Display',serif; font-size:15px; font-weight:700;
+  letter-spacing:6px; text-transform:uppercase;
+  color:#fff;
+  text-shadow: 0 0 30px rgba(184,150,62,0.6);
+  position: relative;
+  animation: rxTitle 6s ease-in-out infinite;
+}
+@keyframes rxTitle {
+  0%,89%,100%{letter-spacing:6px;opacity:1}
+  90%{letter-spacing:3px;opacity:0.2;filter:blur(2px)}
+  91%{letter-spacing:8px;opacity:1;filter:blur(0)}
+  92%{letter-spacing:6px}
+}
+
+.rx-x { font-family:'Playfair Display',serif; font-size:18px; color:#B8963E; margin:0 12px; animation: rxGold 2s ease-in-out infinite; }
+@keyframes rxGold { 0%,100%{opacity:0.7;text-shadow:0 0 8px rgba(184,150,62,0.3)} 50%{opacity:1;text-shadow:0 0 20px rgba(212,175,90,1), 0 0 40px rgba(184,150,62,0.6)} }
+
+.rx-h1 { font-family:'Playfair Display',serif; font-size:15px; font-weight:700; letter-spacing:5px; color:#B8963E; }
+
+.rx-secret {
+  margin-left: 22px;
+  display: flex; align-items: center; gap: 5px;
+}
+.rx-bar {
+  height: 13px; background: #B8963E; border-radius: 2px;
+  opacity: 0.9;
+  animation: rxBar 2.2s ease-in-out infinite;
+}
+.rx-bar:nth-child(2){ animation-delay:0.3s; opacity:0.7; }
+@keyframes rxBar { 0%,100%{opacity:0.9} 50%{opacity:0.3} }
+
+.rx-hype {
+  margin-left: 22px;
+  font-family:'Jost',sans-serif; font-size:10px; font-weight:200;
+  letter-spacing:5px; text-transform:uppercase;
+  color:rgba(255,255,255,0.5);
+  animation: rxHype 3s ease-in-out infinite;
+}
+@keyframes rxHype { 0%,100%{color:rgba(255,255,255,0.35);letter-spacing:5px} 50%{color:rgba(212,175,90,0.9);letter-spacing:6px} }
+
+/* Gold scan sweep */
+.rx-sweep {
+  position:absolute; top:0; left:-100%; width:30%; height:100%; z-index:3; pointer-events:none;
+  background: linear-gradient(90deg, transparent, rgba(212,175,90,0.07), transparent);
+  animation: rxSweep 3.5s ease-in-out infinite;
+}
+@keyframes rxSweep { 0%{left:-30%} 100%{left:110%} }
+
+/* Bottom gold line */
+.rx-line {
+  position:absolute; bottom:0; left:0; right:0; height:1px; z-index:4;
+  background: linear-gradient(to right, transparent 0%, #B8963E 25%, #D4AF5A 50%, #B8963E 75%, transparent 100%);
+  box-shadow: 0 0 12px rgba(184,150,62,0.7), 0 0 24px rgba(184,150,62,0.3);
+}
+/* Top edge accent */
+.rx-topline { position:absolute; top:0; left:0; right:0; height:1px; z-index:4; background:rgba(255,26,0,0.4); }
+</style>
+
+<div id="rxBanner">
+  <canvas id="rxCanvas"></canvas>
+  <div class="rx-sweep"></div>
+  <div class="rx-topline"></div>
+  <div class="rx-line"></div>
+
+  <div id="rxContent">
+    <div class="rx-live">
+      <div class="rx-dot"></div>
+      <span class="rx-live-txt">Release</span>
+    </div>
+
+```
+<div class="rx-divider"></div>
+
+<span class="rx-title">MR. POETIK</span>
+<span class="rx-x">×</span>
+<span class="rx-h1">H1</span>
+
+<div class="rx-secret">
+  <div class="rx-bar" style="width:48px;"></div>
+  <div class="rx-bar" style="width:30px;"></div>
+</div>
+
+<div class="rx-divider"></div>
+
+<span class="rx-hype">Seid ihr bereit?</span>
+```
+
+  </div>
+</div>
+
+<script>
+(function(){
+  const canvas = document.getElementById('rxCanvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, bars = [];
+  
+  function resize(){
+    W = canvas.width = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+    bars = [];
+    const count = Math.floor(W / 4);
+    for(let i=0; i<count; i++){
+      bars.push({
+        x: i * 4,
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.6 + Math.random() * 1.4,
+        amp: 4 + Math.random() * 10,
+        gold: Math.random() > 0.6
+      });
+    }
+  }
+  
+  let t = 0;
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    t += 0.018;
+    
+    bars.forEach(b => {
+      const h = Math.abs(Math.sin(b.phase + t * b.speed)) * b.amp;
+      const y = H/2 - h/2;
+      
+      if(b.gold){
+        const grad = ctx.createLinearGradient(0, y, 0, y+h);
+        grad.addColorStop(0, 'rgba(212,175,90,0)');
+        grad.addColorStop(0.5, 'rgba(212,175,90,0.8)');
+        grad.addColorStop(1, 'rgba(212,175,90,0)');
+        ctx.fillStyle = grad;
+      } else {
+        const grad = ctx.createLinearGradient(0, y, 0, y+h);
+        grad.addColorStop(0, 'rgba(255,255,255,0)');
+        grad.addColorStop(0.5, 'rgba(255,255,255,0.12)');
+        grad.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = grad;
+      }
+      ctx.fillRect(b.x, y, 2, h);
+    });
+    
+    requestAnimationFrame(draw);
+  }
+  
+  resize();
+  window.addEventListener('resize', resize);
+  draw();
+})();
+</script>
+
+<!-- ═══ END RELEASE BANNER ═══ -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
